@@ -3,32 +3,32 @@
 
 ## Problem Statement
 
-We are given test cases in **JSON format** that contain multiple points (`x, y`) encoded in different bases.
+We are given test cases in **JSON format** containing multiple points (`x, y`), where the `y` values are encoded in **different bases**.
 The task is to:
 
-1. Parse the input.
+1. Parse the input JSON.
 2. Convert all values to decimal (`BigInt`).
 3. Use **polynomial interpolation (Lagrange method)** with `k` points to reconstruct the polynomial.
-4. Find the **secret value** → `f(0)` (constant term).
-5. Detect and report **wrong data points** (points that do not lie on the polynomial).
+4. Find the **secret value** → `f(0)` (the constant term).
+5. Detect and report wrong data points → points that do not fit the reconstructed polynomial.
 
 ---
 
 ## Technology Used
 
 * **Language**: JavaScript (Node.js)
-* **Key Features Utilized**:
+* **Key Features**:
 
-  * `BigInt` for handling very large numbers.
-  * A custom `Rational` class for exact fraction arithmetic (avoids floating-point errors).
-  * Lagrange interpolation for polynomial reconstruction.
+  * `BigInt` for arbitrarily large numbers.
+  * Custom `Rational` class for exact fraction arithmetic, avoiding floating-point errors.
+  * Lagrange interpolation to reconstruct the hidden polynomial from valid points.
 
 ### Why JavaScript (Node.js)?
 
-* **Cross-platform and fast setup**: Node.js runs easily in different environments without heavy dependencies.
-* **Native BigInt support**: JavaScript provides built-in support for arbitrary-precision integers, which is critical for handling very large values in this problem.
-* **Ease of working with JSON**: Since test cases are given in JSON, JavaScript (being natively tied to JSON) provides direct parsing with no extra libraries.
-* **Rapid prototyping**: JavaScript allows quick implementation and testing, making it efficient for assignments and problem-solving scenarios.
+* **Native BigInt support**: Handles large integer calculations without external libraries.
+* **Direct JSON handling**: JSON parsing is built into JavaScript, making the input processing simpler and more reliable.
+* **Cross-platform**: Node.js runs consistently across systems, ensuring easy testing and execution.
+* **Rapid prototyping**: Suitable for assignments where correctness and speed of development are equally important.
 
 ---
 
@@ -57,7 +57,7 @@ node -v
 
 ### Step 2: Run with JSON test file
 
-Navigate to the project folder and run:
+In PowerShell, CMD, or any terminal, navigate to the project folder and run:
 
 ```bash
 node main.js testcase1.json
@@ -75,6 +75,10 @@ Secret (f(0)) = 3
 Wrong Data Points: None
 ```
 
+All given points lie on the reconstructed polynomial.
+
+---
+
 ### Test Case 2 (`testcase2.json`)
 
 ```
@@ -82,30 +86,47 @@ Secret (f(0)) = 79836264049851
 Wrong Data Points: 2, 8
 ```
 
+Points at **x=2** and **x=8** do not match the polynomial reconstructed from the valid `k=7` points.
+
 ---
 
 ## Approach
 
-1. Parse the JSON and extract `(x, base, value)`.
-2. Convert each value to decimal using its given base.
-3. Select `k` points and compute the polynomial using **Lagrange interpolation**.
-4. Evaluate the polynomial at `x=0` to determine the secret.
-5. Verify all provided points against the reconstructed polynomial.
+1. Parse JSON and extract `(x, base, value)` triplets.
 
-   * If `f(x)` = given `y` → valid point.
-   * If `f(x)` ≠ given `y` → wrong data point.
+2. Convert each `value` into decimal using its `base`.
+
+3. Select `k` points and apply **Lagrange interpolation**.
+
+   Formula:
+
+   $$
+   f(0) = \sum_{i=1}^k y_i \cdot \prod_{j \neq i} \frac{0 - x_j}{x_i - x_j}
+   $$
+
+4. Evaluate `f(0)` to obtain the secret.
+
+5. Verify all points by substituting `x` into the polynomial:
+
+   * If `f(x)` matches the given `y` → valid point.
+   * If not → wrong data point.
 
 ---
 
 ## Why Wrong Data Points Exist
 
-In **secret sharing schemes** (like Shamir’s Secret Sharing):
+In secret sharing schemes such as **Shamir’s Secret Sharing**:
 
-* The secret polynomial can be reconstructed using any `k` valid points.
-* If extra points (`n > k`) are provided, some may be **corrupted, tampered, or simply invalid**.
-* These invalid points will not satisfy the reconstructed polynomial.
+* The polynomial can be reconstructed from any `k` valid points.
+* If more than `k` points are given, extra points may be **tampered, corrupted, or invalid**.
+* These incorrect points will not satisfy the reconstructed polynomial.
 
-In **Test Case 2**, points at `x=2` and `x=8` do not match the polynomial formed from the valid 7 points, so they are marked as wrong.
+In **Test Case 2**:
+
+* The polynomial built from 7 valid points predicts values that do not match the data for `x=2` and `x=8`.
+* Therefore, these are reported as wrong points.
+
+This ensures that the reconstructed secret is **robust and trustworthy**, even if some data is incorrect.
 
 ---
 
@@ -114,5 +135,6 @@ In **Test Case 2**, points at `x=2` and `x=8` do not match the polynomial formed
 * **Test Case 1** → Secret: `3` • Wrong Points: None
 * **Test Case 2** → Secret: `79836264049851` • Wrong Points: `2, 8`
 
----
+The algorithm correctly reconstructs the secret and identifies invalid data points.
 
+---
